@@ -2,7 +2,66 @@ import React from "react";
 import Fuse from "fuse.js";
 import { Box, FormControl, SelectPanel, TextInput } from "@primer/react";
 import { ActionList } from "@primer/react/deprecated";
-import GHAPI from "./github.ae.json";
+import GHAPI_raw from "./api.github.com.json";
+
+// see also https://github.com/drwpow/openapi-typescript/blob/main/src/types.ts
+// see also https://github.com/metadevpro/openapi3-ts/blob/master/src/model/OpenApi.ts
+
+type Ref = { $ref: string };
+type RefOr<T> = Ref | T;
+
+type Tag = { name: string; description: string };
+
+type Schema = {
+  description?: string;
+  type?: "integer" | "number" | "string" | "boolean" | "object" | "array";
+  anyOf?: RefOr<Schema>[];
+  format?: "date-time" | "uri";
+  enum?: any[];
+  example?: any;
+  nullable?: boolean;
+  properties?: Record<string, RefOr<Schema>>;
+  required?: string[];
+  items?: RefOr<Schema>;
+};
+
+type Parameter = {
+  name: string;
+  in: "path" | "query";
+  required: boolean;
+  schema: Schema;
+};
+
+type Operation = {
+  summary: string;
+  description: string;
+  tags: string[];
+  externalDocs?: {
+    url: string;
+  };
+  parameters?: RefOr<Parameter>[];
+};
+
+type Path = {
+  get?: Operation;
+  put?: Operation;
+  post?: Operation;
+  delete?: Operation;
+  options?: Operation;
+  head?: Operation;
+  patch?: Operation;
+  trace?: Operation;
+};
+
+type OpenAPI = {
+  tags: Tag[];
+  paths: Record<string, Path>;
+  components: {
+    schemas: Record<string, Schema>;
+  };
+};
+
+const GHAPI = GHAPI_raw as unknown as OpenAPI;
 
 function App() {
   const [token, setToken] = React.useState("");
@@ -15,7 +74,7 @@ function App() {
   const fuse = React.useMemo(
     () =>
       new Fuse(
-        Object.entries(GHAPI.paths).map(([path, endpoint], id) => ({
+        Object.entries(GHAPI.paths).map(([path, endpoint]) => ({
           path,
           endpoint,
         })),
@@ -26,6 +85,19 @@ function App() {
       ),
     []
   );
+
+  const items = React.useMemo(
+    () =>
+      fuse.search(search, { limit: 50 }).map((result) => ({
+        text: result.item.path,
+        id: result.item.path,
+      })),
+    [search]
+  );
+
+  if (endpoint) {
+    console.log(GHAPI.paths[endpoint.id]);
+  }
 
   return (
     <Box m={"1em"}>
@@ -43,10 +115,7 @@ function App() {
           placeholderText=""
           open={open}
           onOpenChange={setOpen}
-          items={fuse.search(search, { limit: 50 }).map((result) => ({
-            text: result.item.path,
-            id: result.item.path,
-          }))}
+          items={items}
           onFilterChange={setSearch}
           selected={endpoint}
           onSelectedChange={setEndpoint}
