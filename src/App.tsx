@@ -1,70 +1,27 @@
 import React from "react";
 import Fuse from "fuse.js";
-import { Box, FormControl, SelectPanel, TextInput } from "@primer/react";
-import { ActionList } from "@primer/react/deprecated";
-import GHAPI_raw from "./api.github.com.json";
+import GHAPI from "./GHAPI";
 
-// see also https://github.com/drwpow/openapi-typescript/blob/main/src/types.ts
-// see also https://github.com/metadevpro/openapi3-ts/blob/master/src/model/OpenApi.ts
-
-type Ref = { $ref: string };
-type RefOr<T> = Ref | T;
-
-type Tag = { name: string; description: string };
-
-type Schema = {
-  description?: string;
-  type?: "integer" | "number" | "string" | "boolean" | "object" | "array";
-  anyOf?: RefOr<Schema>[];
-  format?: "date-time" | "uri";
-  enum?: any[];
-  example?: any;
-  nullable?: boolean;
-  properties?: Record<string, RefOr<Schema>>;
-  required?: string[];
-  items?: RefOr<Schema>;
-};
-
-type Parameter = {
-  name: string;
-  in: "path" | "query";
-  required: boolean;
-  schema: Schema;
-};
-
-type Operation = {
-  summary: string;
-  description: string;
-  tags: string[];
-  externalDocs?: {
-    url: string;
-  };
-  parameters?: RefOr<Parameter>[];
-};
-
-type Path = {
-  get?: Operation;
-  put?: Operation;
-  post?: Operation;
-  delete?: Operation;
-  options?: Operation;
-  head?: Operation;
-  patch?: Operation;
-  trace?: Operation;
-};
-
-type OpenAPI = {
-  tags: Tag[];
-  paths: Record<string, Path>;
-  components: {
-    schemas: Record<string, Schema>;
-  };
-};
-
-const GHAPI = GHAPI_raw as unknown as OpenAPI;
-
-function App() {
+const Header = () => {
   const [token, setToken] = React.useState("");
+
+  return (
+    <div>
+      <h1 className="text-3xl">GitHub API Explorer</h1>
+      <label>
+        Token
+        <input
+          id="token"
+          type="text"
+          value={token}
+          onChange={(e) => setToken(e.currentTarget.value)}
+        />
+      </label>
+    </div>
+  );
+};
+
+const App = () => {
   const [search, setSearch] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [endpoint, setEndpoint] = React.useState<
@@ -100,33 +57,15 @@ function App() {
   }
 
   return (
-    <Box m={"1em"}>
-      <h1>GitHub API Explorer</h1>
-      <FormControl>
-        <FormControl.Label>Token</FormControl.Label>
-        <TextInput
-          value={token}
-          onChange={(e) => setToken(e.currentTarget.value)}
-        />
-      </FormControl>
-      <FormControl>
-        <FormControl.Label>Endpoint</FormControl.Label>
-        <SelectPanel
-          placeholderText=""
-          open={open}
-          onOpenChange={setOpen}
-          items={items}
-          onFilterChange={setSearch}
-          selected={endpoint}
-          onSelectedChange={setEndpoint}
-          overlayProps={{ width: "auto", height: "large" }}
-          renderItem={(props) => {
-            return <ActionList.Item {...props} />;
-          }}
-        />
-      </FormControl>
-    </Box>
+    <>
+      <Header />
+      <div className="grid grid-cols-3 h-full">
+        <div className="h-full rounded-2xl border-2">1</div>
+        <div className="h-full rounded-2xl border-2">2</div>
+        <div className="h-full rounded-2xl border-2">3</div>
+      </div>
+    </>
   );
-}
+};
 
 export default App;
